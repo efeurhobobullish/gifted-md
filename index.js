@@ -360,7 +360,7 @@ Gifted.ev.on("messages.upsert", async ({ messages }) => {
 
         Gifted.ev.on("messages.upsert", async ({ messages }) => {
             const ms = messages[0];
-             console.log(ms) /////////////////////////////////////////////////////////
+           //  console.log(ms) /////////////////////////////////////////////////////////
             if (!ms?.message || !ms?.key) return;
 
             function standardizeJid(jid) {
