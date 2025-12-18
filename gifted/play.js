@@ -1,4 +1,5 @@
 const { gmd, toPtt } = require("../gift");
+const yts = require("yt-search");
 const { downloadContentFromMessage, generateWAMessageFromContent, normalizeMessageContent } = require('gifted-baileys');
 const { sendButtons } = require('gifted-btns');
 
@@ -125,21 +126,15 @@ gmd({
 
     if (!q) {
       await react("❌");
-      return reply("Please provide a song name or youtube url");
+      return reply("Please provide a song name");
     }
 
     try {
-      const searchResponse = await gmdJson(`https://yts.giftedtech.co.ke/?q=${encodeURIComponent(q)}`);
+      const searchResponse = await yts(q);
 
-      if (!searchResponse || !Array.isArray(searchResponse.videos)) {
-        await react("❌");
-        return reply("Invalid response from search API. Please try again.");
-      }
-
-      if (searchResponse.videos.length === 0) {
-        await react("❌");
-        return reply("No results found for your search.");
-      }
+      if (!searchResponse.videos.length) {
+        return reply("No video found for your query.");
+            }
 
       const firstVideo = searchResponse.videos[0];
       const videoUrl = firstVideo.url;
@@ -160,7 +155,7 @@ gmd({
       // Send buttons 
       await sendButtons(Gifted, from, {
         title: `${botName} 𝐒𝐎𝐍𝐆 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐑`,
-        text: `⿻ *Title:* ${firstVideo.name}\n⿻ *Duration:* ${firstVideo.duration}\n\n*Select download format:*`,
+        text: `⿻ *Title:* ${firstVideo.title}\n⿻ *Duration:* ${firstVideo.timestamp}\n\n*Select download format:*`,
         footer: botFooter,
         image: firstVideo.thumbnail || botPic,
         buttons: [
@@ -220,8 +215,8 @@ gmd({
               await Gifted.sendMessage(from, {
                 document: convertedBuffer,
                 mimetype: "audio/mpeg",
-                fileName: `${firstVideo.name}.mp3`.replace(/[^\w\s.-]/gi, ''),
-                caption: `${firstVideo.name}`,
+                fileName: `${firstVideo.title}.mp3`.replace(/[^\w\s.-]/gi, ''),
+                caption: `${firstVideo.title}`,
               }, { quoted: messageData });
               break;
 
@@ -249,144 +244,6 @@ gmd({
 );
 
 
-/* gmd({
-    pattern: "play",
-    aliases: ["ytmp3", "ytmp3doc", "audiodoc", "yta"],
-    category: "downloader",
-    react: "🎶",
-    description: "Download Video from Youtube"
-  },
-  async (from, Gifted, conText) => {
-    const { q, mek, reply, react, sender, botPic, botName, botFooter, newsletterUrl, newsletterJid, gmdJson, gmdBuffer, formatAudio, GiftedTechApi, GiftedApiKey } = conText;
-
-    if (!q) {
-      await react("❌");
-      return reply("Please provide a song name or youtube url");
-    }
-
-    try {
-      const searchResponse = await gmdJson(`https://yts.giftedtech.co.ke/?q=${encodeURIComponent(q)}`);
-
-      if (!searchResponse || !Array.isArray(searchResponse.videos)) {
-        await react("❌");
-        return reply("Invalid response from search API. Please try again.");
-      }
-
-      if (searchResponse.videos.length === 0) {
-        await react("❌");
-        return reply("No results found for your search.");
-      }
-
-      const firstVideo = searchResponse.videos[0];
-      const videoUrl = firstVideo.url;
-
-      const audioApi = `${GiftedTechApi}/api/download/ytmp3?stream=true&apikey=${GiftedApiKey}&url=${encodeURIComponent(videoUrl)}`;
-
-      const response = await gmdBuffer(audioApi);
-      
-     const sizeMB = response.length / (1024 * 1024);
-      if (sizeMB > 16) {
-        await reply("File is large, processing might take a while...");
-      }
-
-      const convertedBuffer = await formatAudio(response);
-            const infoMess = {
-        image: { url: firstVideo.thumbnail || botPic },
-        caption: `> *${botName} 𝐒𝐎𝐍𝐆 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐑*
-╭───────────────◆
-│⿻ *Title:* ${firstVideo.name}
-│⿻ *Duration:* ${firstVideo.duration}
-╰────────────────◆
-⏱ *Session expires in 3 minutes*
-╭───────────────◆
-│Reply With:
-│1️⃣ To Download Audio 🎶
-│2️⃣ To Download as Document 📄
-╰────────────────◆`,
-        contextInfo: {
-          mentionedJid: [sender],
-          forwardingScore: 5,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: newsletterJid,
-            newsletterName: botName,
-            serverMessageId: 143
-          }
-        }
-      };
-
-      const messageSent = await Gifted.sendMessage(from, infoMess, { quoted: mek });
-      const messageId = messageSent.key.id;
-
-      const handleResponse = async (event) => {
-        const messageData = event.messages[0];
-        if (!messageData.message) return;
-        const isReplyToDownloadPrompt = messageData.message.extendedTextMessage?.contextInfo?.stanzaId === messageId;
-        if (!isReplyToDownloadPrompt) return;
-        const messageContent = messageData.message.conversation || messageData.message.extendedTextMessage?.text;
-        await react("⬇️");
-
-        try {
-          switch (messageContent.trim()) {
-            case "1":
-              await Gifted.sendMessage(from, {
-                audio: convertedBuffer,
-                mimetype: "audio/mpeg",
-                fileName: `${firstVideo.name}.mp3`.replace(/[^\w\s.-]/gi, ''),
-                caption: `${firstVideo.name}`,
-                externalAdReply: {
-                  title: `${firstVideo.name}.mp3`,
-                  body: 'Youtube Downloader',
-                  mediaType: 1,
-                  thumbnailUrl: firstVideo.thumbnail || botPic,
-                  sourceUrl: newsletterUrl,
-                  renderLargerThumbnail: false,
-                  showAdAttribution: true,
-                },
-              }, { quoted: messageData });
-              break;
-
-            case "2":
-              await Gifted.sendMessage(from, {
-                document: convertedBuffer,
-                mimetype: "audio/mpeg",
-                fileName: `${firstVideo.name}.mp3`.replace(/[^\w\s.-]/gi, ''),
-                caption: `${firstVideo.name}`,
-              }, { quoted: messageData });
-              break;
-
-            default:
-              await reply("Invalid option selected. Please reply with:\n1️⃣ For Audio\n2️⃣ For Document", messageData);
-              return;
-          }
-          await react("✅");
-        } catch (error) {
-          console.error("Error sending media:", error);
-          await react("❌");
-          await reply("Failed to send media. Please try again.", messageData);
-        }
-      };
-
-      let sessionExpired = false;
-
-      const timeoutHandler = () => {
-        sessionExpired = true;
-        Gifted.ev.off("messages.upsert", handleResponse);
-      };
-
-      setTimeout(timeoutHandler, 180000);
-
-      Gifted.ev.on("messages.upsert", handleResponse);
-
-    } catch (error) {
-      console.error("Error during download process:", error);
-      await react("❌");
-      return reply("Oops! Something went wrong. Please try again.");
-    }
-  }
-);
-*/
-
 gmd({
     pattern: "video",
     aliases: ["ytmp4doc", "mp4", "ytmp4", "dlmp4"],
@@ -399,21 +256,15 @@ gmd({
 
     if (!q) {
       await react("❌");
-      return reply("Please provide a video name or youtube url");
+      return reply("Please provide a video name");
     }
 
     try {
-      const searchResponse = await gmdJson(`https://yts.giftedtech.co.ke/?q=${encodeURIComponent(q)}`);
+      const searchResponse = await yts(q);
 
-      if (!searchResponse || !Array.isArray(searchResponse.videos)) {
-        await react("❌");
-        return reply("Invalid response from search API. Please try again.");
-      }
-
-      if (searchResponse.videos.length === 0) {
-        await react("❌");
-        return reply("No results found for your search.");
-      }
+      if (!searchResponse.videos.length) {
+        return reply("No video found for your query.");
+            }
 
       const firstVideo = searchResponse.videos[0];
       const videoUrl = firstVideo.url;
@@ -433,8 +284,8 @@ gmd({
         image: { url: firstVideo.thumbnail || botPic },
         caption: `> *${botName} 𝐕𝐈𝐃𝐄𝐎 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐑*
 ╭───────────────◆
-│⿻ *Title:* ${firstVideo.name}
-│⿻ *Duration:* ${firstVideo.duration}
+│⿻ *Title:* ${firstVideo.title}
+│⿻ *Duration:* ${firstVideo.timestamp}
 ╰────────────────◆
 ⏱ *Session expires in 3 minutes*
 ╭───────────────◆
@@ -471,9 +322,9 @@ gmd({
               await Gifted.sendMessage(from, {
                 video: convertedBuffer,
                 mimetype: "video/mp4",
-                pvt: true,
-                fileName: `${firstVideo.name}.mp4`.replace(/[^\w\s.-]/gi, ''),
-                caption: `🎥 ${firstVideo.name}`,
+               // pvt: true,
+                fileName: `${firstVideo.title}.mp4`.replace(/[^\w\s.-]/gi, ''),
+                caption: `🎥 ${firstVideo.title}`,
               }, { quoted: messageData });
               break;
 
@@ -481,8 +332,8 @@ gmd({
               await Gifted.sendMessage(from, {
                 document: convertedBuffer,
                 mimetype: "video/mp4",
-                fileName: `${firstVideo.name}.mp4`.replace(/[^\w\s.-]/gi, ''),
-                caption: `📄 ${firstVideo.name}`,
+                fileName: `${firstVideo.title}.mp4`.replace(/[^\w\s.-]/gi, ''),
+                caption: `📄 ${firstVideo.title}`,
               }, { quoted: messageData });
               break;
 
