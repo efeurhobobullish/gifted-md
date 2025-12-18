@@ -12,7 +12,7 @@ gmd({
     category: "owner",
     filename: __filename
 }, async (from, Gifted, conText) => {
-  const { q, mek, react, reply, isSuperUser, setCommitHash, getCommitHash } = conText;
+  const { q, mek, react, reply, config, isSuperUser, setCommitHash, getCommitHash } = conText;
     
   if (!isSuperUser) {
     await react("❌");
@@ -22,13 +22,13 @@ gmd({
     try {
         await reply("🔍 Checking for New Updates...");
 
-        const { data: commitData } = await axios.get("https://api.github.com/repos/mauricegift/gifted-md/commits/main");
+        const { data: commitData } = await axios.get(`https://api.github.com/repos/${config.BOT_REPO}/commits/main`);
         const latestCommitHash = commitData.sha;
 
         const currentHash = await getCommitHash();
 
         if (latestCommitHash === currentHash) {
-            return reply("✅ Your Gifted-Md Bot is Already on the Latest Version!");
+            return reply("✅ Your Bot is Already on the Latest Version!");
         }
 
         const authorName = commitData.commit.author.name;
@@ -36,17 +36,17 @@ gmd({
         const commitDate = new Date(commitData.commit.author.date).toLocaleString();
         const commitMessage = commitData.commit.message;
 
-        await reply(`🔄 Updating Gifted-Md Bot...\n\n*Commit Details:*\n👤 Author: ${authorName} (${authorEmail})\n📅 Date: ${commitDate}\n💬 Message: ${commitMessage}`);
+        await reply(`🔄 Updating Bot...\n\n*Commit Details:*\n👤 Author: ${authorName} (${authorEmail})\n📅 Date: ${commitDate}\n💬 Message: ${commitMessage}`);
 
-        const zipPath = path.join(__dirname, '..', 'gifted-md-main.zip');
-        const { data: zipData } = await axios.get("https://github.com/mauricegift/gifted-md/archive/main.zip", { responseType: "arraybuffer" });
+        const zipPath = path.join(__dirname, '..', 'gifted-md-main.zip'); // Replace this  with your bot name and branch if you're cloning
+        const { data: zipData } = await axios.get(`https://github.com/${config.BOT_REPO}/archive/main.zip`, { responseType: "arraybuffer" });
         fs.writeFileSync(zipPath, zipData);
 
         const extractPath = path.join(__dirname, '..', 'latest');
         const zip = new AdmZip(zipPath);
         zip.extractAllTo(extractPath, true);
 
-        const sourcePath = path.join(extractPath, 'gifted-md-main');
+        const sourcePath = path.join(extractPath, 'gifted-md-main'); // Replace this  with your bot name and branch if you're cloning
         const destinationPath = path.join(__dirname, '..');
         copyFolderSync(sourcePath, destinationPath);
         await setCommitHash(latestCommitHash);
@@ -76,8 +76,8 @@ function copyFolderSync(source, target) {
         const srcPath = path.join(source, item);
         const destPath = path.join(target, item);
 
-        if (item === "config.js" || item === "app.json") {
-            console.log(`Skipping ${item} to preserve custom settings/env ie session id.`);
+        if (item === ".env") {
+            console.log(`Skipping ${item} to preserve custom settings/vars ie session id.`);
             continue;
         }
 
