@@ -32,10 +32,6 @@ await sendButtons(Gifted, from, {
   text: `⚡ Pong: ${responseTime}ms`,    
   footer: `> *${botFooter}*`,            
   buttons: [ 
-    /*{ name: 'cta_copy', 
-      buttonParamsJson: JSON.stringify({ 
-        display_text: 'Copy Code', 
-        copy_code: '123-123' }) },*/
     {
       name: 'cta_url',
       buttonParamsJson: JSON.stringify({
@@ -63,14 +59,217 @@ await sendButtons(Gifted, from, {
 );
 
 
+gmd({
+    pattern: "report",
+    aliases: ["request"],
+    react: '💫',
+    description: "Request New Features.",
+    category: "owner",
+},
+}, async (from, Gifted, conText) => {
+const { mek, q, sender, react, pushName, botPrefix } = conText;
+const reportedMessages = {};
+const devlopernumber = '254799916673';
+try{
+  if (!isSuperUser) return reply("*Owner Only Command*");
+  if (!q) return reply(`Example: ${botPrefix}request hi dev downloader commands are not working`);
+    const messageId = mek.key.id;
+    if (reportedMessages[messageId]) {
+        return reply("This report has already been forwarded to the owner. Please wait for a response.");
+    }
+    reportedMessages[messageId] = true;
+    const textt = `*| REQUEST/REPORT |*`;
+    const teks1 = `\n\n*User*: @${sender.split("@")[0]}\n*Request:* ${q}`;
+    const teks2 = `\n\n*Hi ${pushname}, your request has been forwarded to my Owners.*\n*Please wait...*`;
+    Gifted.sendMessage(devlopernumber + "@s.whatsapp.net", {
+        text: textt + teks1,
+        mentions: [m.sender],
+    }, {
+        quoted: mek,
+    });
+    reply("Tʜᴀɴᴋ ʏᴏᴜ ꜰᴏʀ ʏᴏᴜʀ ʀᴇᴘᴏʀᴛ. Iᴛ ʜᴀs ʙᴇᴇɴ ꜰᴏʀᴡᴀʀᴅᴇᴅ ᴛᴏ ᴛʜᴇ ᴏᴡɴᴇʀ. Pʟᴇᴀsᴇ ᴡᴀɪᴛ ꜰᴏʀ ᴀ ʀᴇsᴘᴏɴsᴇ.");
+await react("✅"); 
+} catch (e) {
+reply(e)
+console.log(e)
+}
+})
+
+
+gmd({
+    pattern: "menus",
+    aliases: ["mainmenu"],
+    description: "Display Bot's Uptime, Date, Time, and Other Stats",
+    react: "📜",
+    category: "general",
+}, 
+}, async (from, Gifted, conText) => {
+const { mek, sender, react, config, pushName, botPic, botMode, botVersion, botName, botFooter, timeZone, botPrefix, newsletterJid } = conText;
+    try {
+      function formatUptime(seconds) {
+            const days = Math.floor(seconds / (24 * 60 * 60));
+            seconds %= 24 * 60 * 60;
+            const hours = Math.floor(seconds / (60 * 60));
+            seconds %= 60 * 60;
+            const minutes = Math.floor(seconds / 60);
+            seconds = Math.floor(seconds % 60);
+            return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        const now = new Date();
+        const date = new Intl.DateTimeFormat('en-GB', {
+            timeZone: timeZone,
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        }).format(now);
+
+        const time = new Intl.DateTimeFormat('en-GB', {
+            timeZone: timeZone,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        }).format(now);
+
+        const uptime = formatUptime(process.uptime());
+        const totalCommands = commands.filter((command) => command.pattern).length;
+
+        let menus = `
+*🦄 Uᴘᴛɪᴍᴇ :* ${monospace(uptime)}
+*🍁 Dᴀᴛᴇ Tᴏᴅᴀʏ:* ${monospace(date)}
+*🎗 Tɪᴍᴇ Nᴏᴡ:* ${monospace(time)}
+
+➮Fᴏᴜɴᴅᴇʀ - Gifted Tech
+➮Usᴇʀ - ${monospace(pushName)}
+➮Nᴜᴍ - ${monospace(config.OWNER_NUMBER)} 
+➮Mᴇᴍᴏʀʏ - ${monospace(ram)}
+
+*🧑‍💻 :* ${monospace(botName)} Iꜱ Aᴠᴀɪʟᴀʙʟᴇ
+
+╭──❰ *ALL MENU* ❱
+│🏮 Lɪꜱᴛ
+│🏮 Cᴀᴛᴇɢᴏʀʏ
+│🏮 Hᴇʟᴘ
+│🏮 Aʟɪᴠᴇ
+│🏮 Uᴘᴛɪᴍᴇ
+│🏮 Wᴇᴀᴛʜᴇʀ
+│🏮 Lɪɴᴋ
+│🏮 Cᴘᴜ
+│🏮 Rᴇᴘᴏꜱɪᴛᴏʀʏ
+╰─────────────⦁`;
+
+      const giftedMess = {
+        image: { url: botPic },
+        caption: menus.trim(),
+        contextInfo: {
+          mentionedJid: [sender],
+          forwardingScore: 5,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: newsletterJid,
+             newsletterName: botName,
+             serverMessageId: 0
+          }
+        }
+      };
+      await Gifted.sendMessage(from, giftedMess, { quoted: mek });
+      await react("✅");
+    } catch (e) {
+        console.error(e);
+        reply(`${e}`);
+    }
+});
+
+
+gmd({
+    pattern: "list",
+    alias: ["listmenu"],
+    description: "Show All Commands and their Usage",
+    react: "📜",
+    category: "general",
+},
+const { mek, sender, react, pushName, botPic, botMode, botVersion, botName, botFooter, timeZone, botPrefix, newsletterJid } = conText;
+    function formatUptime(seconds) {
+            const days = Math.floor(seconds / (24 * 60 * 60));
+            seconds %= 24 * 60 * 60;
+            const hours = Math.floor(seconds / (60 * 60));
+            seconds %= 60 * 60;
+            const minutes = Math.floor(seconds / 60);
+            seconds = Math.floor(seconds % 60);
+            return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        const now = new Date();
+        const date = new Intl.DateTimeFormat('en-GB', {
+            timeZone: timeZone,
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        }).format(now);
+
+        const time = new Intl.DateTimeFormat('en-GB', {
+            timeZone: timeZone,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        }).format(now);
+
+        const uptime = formatUptime(process.uptime());
+        const totalCommands = commands.filter((command) => command.pattern).length;
+
+        let list =  `
+╭━━〔 *${monospace(botName)}* 〕━━╮
+│ ✦ *Mᴏᴅᴇ* : ${monospace(botMode)}
+│ ✦ *Pʀᴇғɪx* : [ ${monospace(botPrefix)} ]
+│ ✦ *Usᴇʀ* : ${monospace(pushName)}
+│ ✦ *Pʟᴜɢɪɴs* : ${monospace(totalCommands.toString())}
+│ ✦ *Vᴇʀsɪᴏɴ* : ${monospace(botVersion)}
+│ ✦ *Uᴘᴛɪᴍᴇ* : ${monospace(uptime)}
+│ ✦ *Tɪᴍᴇ Nᴏᴡ* : ${monospace(time)}
+│ ✦ *Dᴀᴛᴇ Tᴏᴅᴀʏ* : ${monospace(date)}
+│ ✦ *Tɪᴍᴇ Zᴏɴᴇ* : ${monospace(timeZone)}
+│ ✦ *Sᴇʀᴠᴇʀ Rᴀᴍ* : ${monospace(ram)}
+╰─────────────────╯${readmore}\n`;
+
+        commands.forEach((gmd, index) => {
+            if (gmd.pattern && gmd.description) {
+                list += `*${index + 1} ${monospace(gmd.pattern)}*\n  ${gmd.description}\n`;
+            }
+        });
+
+        const giftedMess = {
+        image: { url: botPic },
+        caption: list.trim(),
+        contextInfo: {
+          mentionedJid: [sender],
+          forwardingScore: 5,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: newsletterJid,
+            newsletterName: botName,
+            serverMessageId: 0
+          }
+        }
+      };
+      await Gifted.sendMessage(from, giftedMess, { quoted: mek });
+      await react("✅");
+    } catch (e) {
+        console.error(e);
+        reply(`${e}`);
+    }
+});
+
+
 gmd({ 
   pattern: "menu", 
-  aliases: ['help', 'allmenu', 'mainmenu'],
+  aliases: ['help', 'allmenu'],
   react: "🪀",
   category: "general",
   description: "Fetch bot main menu",
 }, async (from, Gifted, conText) => {
-      const { mek, sender, react, pushName, botPic, botMode, botVersion, botName, botFooter, timeZone, botPrefix, newsletterJid } = conText;
+const { mek, sender, react, pushName, botPic, botMode, botVersion, botName, botFooter, timeZone, botPrefix, newsletterJid } = conText;
     function formatUptime(seconds) {
             const days = Math.floor(seconds / (24 * 60 * 60));
             seconds %= 24 * 60 * 60;
@@ -142,7 +341,7 @@ gmd({
           forwardedNewsletterMessageInfo: {
             newsletterJid: newsletterJid,
             newsletterName: botName,
-            serverMessageId: 143
+            serverMessageId: 0
           }
         }
       };
