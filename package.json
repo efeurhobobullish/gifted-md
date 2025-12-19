@@ -3,10 +3,7 @@
   "version": "5.0.0",
   "description": "Gifted-Md, a Multi Device Whatsapp Bot to Enhance Whatsapp Communication Experience",
   "main": "./index.js",
-  "type": "commonjs",
-  "engines": {
-    "npm": "10.x",
-    "node": "22.x"
+  "type": "commonjs"
   },
   "scripts": {
     "start": "pm2 start index.js --name giftedmd",
